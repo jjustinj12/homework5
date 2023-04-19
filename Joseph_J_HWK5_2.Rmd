@@ -1,0 +1,111 @@
+---
+title: "Joseph-J-HWK5-2"
+author: "Justin Joseph"
+date: "2023-04-19"
+output:
+  bookdown::pdf_document2:
+    fig_caption: yes
+    toc: no
+  pdf_document:
+    toc: no
+  html_document:
+    toc: no
+    df_print: paged
+header-includes: \usepackage{booktabs}
+---
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, stringr, readxl, data.table, gdata)
+library(tidyverse)
+library(scales)
+library(knitr)
+library(rdrobust)
+library(modelsummary)
+library(AER)
+library(fixest)
+library(acs)
+library("kableExtra")
+```
+
+```{r, include=FALSE}
+load("Hwk5_workspace_5_2.Rdata")
+```
+
+### 1. 
+
+```{r figure1, warning=FALSE, echo=FALSE, fig.cap="Share of insured individuals with direct purchase health insurance over time."}
+Q1
+```
+
+\newpage
+
+
+### 2.
+Because of the creation of the ACA marketplace there is a reduction in direct purchase health insurance for two reasons. One because of the ACA's regulations in making health insurance more equitable in terms of non price discriminating based on pre-existing health conditions. Because of this mandate some private health insurances had to increase their premiums to protect against this potential risk. In addition, another reason there may have been a decrease in direct purchase health insurance is the fact that the ACA created a subsidized marketplace for consumers to purchase health insurance directly from private firms at a lower rate. Thus this alternative to direct purchase may be more cost effective for consumers and push them away from directly being from an insurance provider and using the marketplace as a cheaper option. Risk corridor and re insurance were meant to reduce premiums but after a few years after 2014  thye were stopped so may of caused a s deacrease in direct insurance people
+\newpage
+
+### 3. 
+```{r figure3, warning=FALSE, echo=FALSE, fig.cap="Share of insured individuals with Medicaid over time"}
+Q3
+```  
+
+\newpage
+
+### 4.
+
+```{r figure4, warning=FALSE, echo=FALSE, fig.cap="Share of uninsued individuals for states that expanded and did not expand medicaid in 2014"}
+figure_Q4
+
+```  
+\newpage
+
+### 5.
+
+```{r, echo=FALSE, fig.align='left'}
+kable(Q5_table, caption = "The average percent of uninsured individuals in 2012 and 2015 for expansion and non-expansion states", booktabs = TRUE) %>% kable_styling(latex_options=c("hold_position"), full_width = TRUE, position="center")
+```
+\newpage
+
+### 6.
+```{r, echo=FALSE, fig.align='left'}
+modelsummary(Q6,
+             title = "The effect of Medicaid expansion on the uninsurance rate using a standard DD regression ",
+             gof_map=list(list("raw"="nobs","clean"="N", "fmt"=0),
+                          list("raw"="r.squared", "clean"="R\\textsuperscript{2}", "fmt"=2))) %>% kable_styling(latex_options=c("hold_position"), full_width = TRUE, position="center")
+```
+
+
+\newpage
+
+### 7. 
+```{r, echo=FALSE}
+modelsummary(Q7,
+             title = "The effect of Medicaid expansion on the uninsurance rate using Fixed Effects Estimator ",
+             gof_map=list(list("raw"="nobs","clean"="N", "fmt"=0),
+                          list("raw"="r.squared", "clean"="R\\textsuperscript{2}", "fmt"=2))) %>% kable_styling(latex_options=c("hold_position"), full_width = TRUE, position="center")
+```
+
+\newpage
+
+### 8. 
+
+```{r, echo=FALSE}
+modelsummary(Q8,
+             title = "The effect of Medicaid expansion on the uninsurance rate using a standard DD regression using all states",
+             gof_map=list(list("raw"="nobs","clean"="N", "fmt"=0),
+                          list("raw"="r.squared", "clean"="R\\textsuperscript{2}", "fmt"=2))) %>% kable_styling(latex_options=c("hold_position"), full_width = TRUE, position="center")
+```
+\newpage
+
+```{r figure9, warning=FALSE, echo=FALSE, fig.align="center", fig.cap="Event STudy for 2014 Treatment Group"}
+iplot(Q9, 
+                  xlab='Time to treatment',
+                  main='')
+
+```  
+
+### 10. Compare estimates between 1970-1990 versus 1991-2015
+```{r figure10, warning=FALSE, echo=FALSE, fig.align="center", fig.cap="Event Study of Medicaid Expansion for each year (including all states"}
+iplot(mod.twfe2, xlab='Time to treatment', main='')
+
+```  
