@@ -17,6 +17,7 @@ library(rdrobust)
 library(modelsummary)
 library(AER)
 library(fixest)
+library(acs)
 ## see list of variable names and tables
 acs.lookup(endyear=2012, table.number="B27010", span=1)
 

@@ -1,7 +1,7 @@
 ---
-title: "Joseph-J-HWK5-1"
+title: "Joseph-J-HWK5-3"
 author: "Justin Joseph"
-date: "2023-04-16"
+date: "2023-04-22"
 output:
   pdf_document:
     toc: no
@@ -28,12 +28,12 @@ library("kableExtra")
 ```
 
 ```{r, include=FALSE}
-load("Hwk5_workspace_5_1.Rdata")
+load("Hwk5_workspace_5_3.Rdata")
 ```
 
 ### 1. 
 
-```{r figure1, warning=FALSE, echo=FALSE, fig.cap="Share of insured individuals with direct purchase health insurance over time."}
+```{r figure1, warning=FALSE, echo=FALSE, fig.cap="Share of insured individuals with direct purchase health insurance between 2012 to 2019."}
 Q1
 ```
 
@@ -45,7 +45,7 @@ Because of the creation of the ACA marketplace there is a reduction in direct pu
 \newpage
 
 ### 3. 
-```{r figure3, warning=FALSE, echo=FALSE, fig.cap="Share of insured individuals with Medicaid over time"}
+```{r figure2, warning=FALSE, echo=FALSE, fig.cap="Share of insured individuals with Medicaid between 2012-2019"}
 Q3
 ```  
 
@@ -53,33 +53,32 @@ Q3
 
 ### 4.
 
-```{r figure4, warning=FALSE, echo=FALSE, fig.cap="Share of uninsued individuals for states that expanded and did not expand medicaid in 2014"}
+```{r figure3, warning =FALSE, echo=FALSE, fig.cap="Share of uninsure individuals for states that expanded and did not expand medicaid in 2014"}
 figure_Q4
+```
 
-```  
 \newpage
 
 ### 5.
 
 ```{r, echo=FALSE, fig.align='left'}
-kable(Q5_table, caption = "The average percent of uninsured individuals in 2012 and 2015 for expansion and non-expansion states", booktabs = TRUE) %>% kable_styling(latex_options=c("hold_position"), full_width = TRUE, position="center")
+kable(Q5_table, col.names = c("Group", "2012 (Pre)", "2015 (Post)"), caption = "The average percent of uninsured individuals in 2012 and 2015 for expansion and non-expansion states", booktabs = TRUE) %>% kable_styling(latex_options=c("hold_position"), full_width = TRUE, position="center")
 ```
 \newpage
 
 ### 6.
 ```{r, echo=FALSE, fig.align='left'}
-modelsummary(Q6,
+modelsummary(dd.est,
              title = "The effect of Medicaid expansion on the uninsurance rate using a standard DD regression ",
              gof_map=list(list("raw"="nobs","clean"="N", "fmt"=0),
                           list("raw"="r.squared", "clean"="R\\textsuperscript{2}", "fmt"=2))) %>% kable_styling(latex_options=c("hold_position"), full_width = TRUE, position="center")
 ```
 
-
 \newpage
 
 ### 7. 
 ```{r, echo=FALSE}
-modelsummary(Q7,
+modelsummary(fe.est,
              title = "The effect of Medicaid expansion on the uninsurance rate using Fixed Effects Estimator ",
              gof_map=list(list("raw"="nobs","clean"="N", "fmt"=0),
                           list("raw"="r.squared", "clean"="R\\textsuperscript{2}", "fmt"=2))) %>% kable_styling(latex_options=c("hold_position"), full_width = TRUE, position="center")
@@ -90,22 +89,24 @@ modelsummary(Q7,
 ### 8. 
 
 ```{r, echo=FALSE}
-modelsummary(Q8,
+modelsummary(fe.est2,
              title = "The effect of Medicaid expansion on the uninsurance rate using a standard DD regression using all states",
              gof_map=list(list("raw"="nobs","clean"="N", "fmt"=0),
                           list("raw"="r.squared", "clean"="R\\textsuperscript{2}", "fmt"=2))) %>% kable_styling(latex_options=c("hold_position"), full_width = TRUE, position="center")
 ```
+
+The reason we get different estimates is because no we are adding states that expanded after 2014. These states are different from states that expanded right away and thus since we have differently groups we will obtain a different estimates. This estimate is greater than our orginal estimate of just looking at states that expanded in 2014 and thus shows there is a more pronounced effect of a decrease in uninsurance rates by expansion when we add a bigger group of states to our sample to create the estimate. 
 \newpage
 
-### 9. 
-```{r figure9, warning=FALSE, n echo=FALSE, fig.cap="Event Study of Medicaid Expansion for each year"}
-Q9_figure
+```{r figure9, warning=FALSE, echo=FALSE, fig.align="center", fig.cap="Event Study for 2014 Treatment Group"}
+iplot(Q9, 
+                  xlab='Time to treatment',
+                  main='')
 
-``` 
+```  
 \newpage
-
-### 10. Compare estimates between 1970-1990 versus 1991-2015
-```{r figure10, warning=FALSE, echo=FALSE, fig.cap="Event Study of Medicaid Expansion for each year (including all states"}
-Q10_figure
+### 10. 
+```{r figure10, warning=FALSE, echo=FALSE, fig.align="center", fig.cap="Event Study of Medicaid Expansion for each year (including all states"}
+iplot(mod.twfe2, xlab='Time to treatment', main='')
 
 ```  

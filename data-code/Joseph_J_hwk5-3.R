@@ -16,10 +16,10 @@ colnames(final.data)
 Q1<- final.data %>%
   group_by(year)%>%
   summarize(direct_insured=mean(ins_direct/adult_pop, na.rm=TRUE))%>%
-  ggplot(aes(x=year, y=direct_insured))+geom_line() + theme_bw()
-  labs(title = "Share of insured individuals with direct purchase health insurance from 2012-2019",
-                                                    x = "Year",
-                                                    y = "Share of individuals",) + theme_bw()
+  ggplot(aes(x=year, y=direct_insured))+geom_line() + geom_point() + theme_bw()+ 
+  labs(
+       x = "Year",
+       y = "Share of individuals",) + theme_bw()
 Q1
 
 #2
@@ -28,10 +28,9 @@ Q1
 
 Q3<- final.data %>%
   group_by(year)%>%
-  filter(S)
   summarize(medicaid_insured=mean(ins_medicaid/adult_pop, na.rm=TRUE))%>%
-  ggplot(aes(x=year, y=medicaid_insured))+geom_line() + geom_point()
-  labs(title = "Share of insured individuals with medicaid from 2012-2019",
+  ggplot(aes(x=year, y=medicaid_insured))+geom_line() + geom_point() +
+  labs(
        x = "Year",
        y = "Share of individuals",) + theme_bw()
 Q3
@@ -44,10 +43,13 @@ not_expanded<-final.data%>%
 not_expanded
 expanded_states_2014<-final.data%>%
   filter(year==2012)%>%
+  filter(! State %in% c("District of Columbia", "Puerto Rico"))%>%
   filter(expand_year==2014)%>%
   select(State)
+view(expanded_states_2014)
 
 
+### view(final.data %>% filter(!is.na(expand_year))) this tells me which states expanded 
 
 figure_Q4 <- final.data %>% 
   filter(year >= 2012 & year <= 2019) %>%
@@ -58,19 +60,20 @@ figure_Q4 <- final.data %>%
   summarize(avg_prop_uninsured = mean(uninsured / adult_pop, na.rm = TRUE)) %>%
   ggplot(aes(x = year, y = avg_prop_uninsured, color = expanded)) + 
   geom_line() +
-  labs(title = "Average Proportion of Uninsured between expanded and not expanded states from 2012-2019",
-       x = "Year",
-       y = "Average Proportion of Uninsured") +
-  geom_vline(xintercept = 2014, color = "red") +
+  labs(
+    x = "Year",
+       y = "Average Proportion of Uninsured",) +
+  geom_vline(xintercept = 2014, color = "red") + theme_bw()+
   ylim(0, 0.25)
 figure_Q4
 
 
 #Q5  
-
+colnames(final.data)
 Q5 <- final.data %>%
+  #filter(!State %in% c("District of Columbia", "Puerto Rico"))%>%
+  filter(!is.na(expand_ever) | expand_year==2014) %>%
   filter(year %in% c(2012, 2015)) %>%
-  filter(!is.na(expand_ever)) %>%
   group_by(year, expand_ever) %>%
   summarize(avg_prop_uninsured = mean((uninsured / adult_pop)*100, na.rm = TRUE))
 
@@ -80,7 +83,7 @@ Q5_table<-Q5%>%
   rename("2012" = `2012`, "2015" = `2015`) %>%
   mutate(expand_ever = ifelse(expand_ever, "Expansion", "Non-Expansion")) %>%
   select(expand_ever, "2012", "2015")
-kable(Q5_table, digits = 3, caption = "Proportion of Uninusred in 2012 and 2015 for states that expanded and did not expanded")
+#kable(Q5_table, digits = 3, caption = "Proportion of Uninusred in 2012 and 2015 for states that expanded and did not expanded")
 Q5_table
 #Q6
 
@@ -107,6 +110,19 @@ regression<-final.data%>%
 Q6 <- lm(prop_uninsured ~post+group+post*group, data=regression)
 modelsummary(Q6)
 
+#############################################################
+reg.data<-final.data %>%
+  mutate(post=(year>=2014), 
+         treat=post*expand_ever,
+         prop_uninsured=uninsured/adult_pop)%>%
+  filter(! State %in% c("District of Columbia", "Puerto Rico"))%>%
+  filter(is.na(expand_year) | expand_year==2014)
+
+dd.est<-lm(prop_uninsured~ post+expand_ever+treat,data=reg.data)
+fe.est<-feols(prop_uninsured ~treat | State + year, data=reg.data)
+dd.est
+fe.est
+
 #Q7
 Q7 <-  feols(prop_uninsured ~ treat | State + year, data=regression)
 modelsummary(Q7)
@@ -125,12 +141,25 @@ regression_all<-final.data%>%
 Q8<-  feols(prop_uninsured ~ treat | State + year, data=regression_all)
 modelsummary(Q8)
 
+#############################################################
+reg.data2<-final.data %>%
+  mutate(treat=case_when(
+    year>=expand_year & !is.na(expand_year)~1,
+    is.na(expand_year)~0,
+    year<expand_year & !is.na(expand_year)~0)
+  )%>%
+  mutate(prop_uninsured=uninsured/adult_pop)
+
+
+fe.est2<-feols(prop_uninsured ~treat | State + year, data=reg.data2)
+fe.est2
+
 
 #Q9
 
 Q9 <- feols(prop_uninsured~i(year, expand_ever, ref=2013) | State + year,
-                  cluster=~State,
-                  data=regression)
+            cluster=~State,
+            data=reg.data)
 modelsummary(Q9)
 
 event.plot<-iplot(Q9, 
@@ -143,46 +172,34 @@ coef_df <- Q9 %>%
 coef_df
 
 
-Q9_figure<-ggplot(coef_df, aes(x = term, y = estimate, color = term)) +
- geom_errorbar(aes(ymin = as.numeric(estimate - std.error), ymax = as.numeric(estimate + std.error)), width = 0.2) +
-  geom_line() +
-  geom_point(aes(y = estimate))+
-  scale_x_discrete(labels = c("2012", "2014", "2015", "2016", "2017", "2018", "2019")) +
-  labs(x = "Year", y = "Coefficient Estimate & 95% CI", 
-       title="Event Study", color = "Expansion Status") +
-  theme_minimal()
-Q9_figure
+# Q9_figure<-ggplot(coef_df, aes(x = term, y = estimate, color = term)) +
+#   geom_errorbar(aes(ymin = as.numeric(estimate - std.error), ymax = as.numeric(estimate + std.error)), width = 0.2) +
+#   geom_line() +
+#   geom_point(aes(y = estimate))+
+#   scale_x_discrete(labels = c("2012", "2014", "2015", "2016", "2017", "2018", "2019")) +
+#   labs(x = "Year", y = "Coefficient Estimate & 95% CI", 
+#        title="Event Study", color = "Expansion Status") +
+#   theme_minimal()
+# Q9_figure
+
+
+################# IN CLASS # 9 
+
 
 #Q10
-reg.data2<-final.data%>%
+reg.data2<-reg.data2%>%
   mutate(prop_uninsured=uninsured/adult_pop)%>%
   mutate(time_to_treat=ifelse(expand_ever==TRUE, year-expand_year,-1),
          time_to_treat=ifelse(time_to_treat<=-4, -4, time_to_treat))
 mod.twfe2<-feols(prop_uninsured~i(time_to_treat, expand_ever, ref=-1)| State + year, 
                  data=reg.data2)
-iplot(mod.twfe2)
+Q10<-iplot(mod.twfe2, xlab='Time to treatment')
+
+
+#out.width
 
 
 
 
-Q10 <- feols(prop_uninsured~i(year, expand_ever, ref=2013) | State + year,
-            cluster=~State,
-            data=regression_all)
-modelsummary(Q10)
 
-coef_df_10 <- Q10 %>%
-  tidy() %>%
-  filter(term != "(Intercept)")
-
-Q10_figure<-ggplot(coef_df_10, aes(x = term, y = estimate, color = term)) +
-  geom_errorbar(aes(ymin = as.numeric(estimate - std.error), ymax = as.numeric(estimate + std.error)), width = 0.2) +
-  geom_line() +
-  geom_point(aes(y = estimate))+
-  scale_x_discrete(labels = c("2012", "2014", "2015", "2016", "2017", "2018", "2019")) +
-  labs(x = "Year", y = "Coefficient Estimate & 95% CI", 
-       title="Event Study for all states", color = "Expansion Status") +
-  theme_minimal()
-Q10_figure
-
-
-save.image("Hwk5_workspace_5_1.Rdata")
+save.image("Hwk5_workspace_5_3.Rdata")
